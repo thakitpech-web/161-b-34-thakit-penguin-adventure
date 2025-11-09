@@ -1,8 +1,7 @@
-// Scripts/Characters/Character.cs
-using UnityEditor.Experimental.GraphView;
+﻿// Scripts/Characters/Character.cs
 using UnityEngine;
 
-public abstract class Character : MonoBehaviour
+public abstract class Character : MonoBehaviour, IDamageable, iAttacker
 {
     [Header("Stats")]
     [SerializeField] private int maxHP = 3;
@@ -16,7 +15,7 @@ public abstract class Character : MonoBehaviour
     protected Animator anim;
     protected bool facingRight = true;
 
-    protected virtual void Awake()   // virtual ? child can extend
+    protected virtual void Awake()   // virtual ⇒ child can extend
     {
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
@@ -45,7 +44,7 @@ public abstract class Character : MonoBehaviour
     public virtual void TakeDamage(int amount)
     {
         CurrentHP = Mathf.Max(0, CurrentHP - amount);
-        Debug.Log($"{name} TakeDamage {amount} ? HP {CurrentHP}");
+        Debug.Log($"{name} TakeDamage {amount} → HP {CurrentHP}");
         if (CurrentHP <= 0) Die();
     }
 
