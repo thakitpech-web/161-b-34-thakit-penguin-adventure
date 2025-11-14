@@ -52,6 +52,20 @@ public class Player : Character
         base.Move(input);      // ใช้วิธี Move เดิมจาก Character
     }
 
+    public void OnHitWith(Enemy enemy)
+    {
+        TakeDamage(enemy.DamageHit);
+        Debug.Log($"Player take dame current Hp : {Heath}");
+    }
+
+    private void OnCollisionEnter2D(Collision2D other)
+    {
+        Enemy enemy = other.gameObject.GetComponent<Enemy>();
+        if (enemy != null) { 
+        OnHitWith(enemy);
+        }
+    }
+
     public override void Attack()
     {
         // Player เกมนี้ไม่มีอาวุธโจมตี

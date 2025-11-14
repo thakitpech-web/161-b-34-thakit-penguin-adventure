@@ -61,12 +61,13 @@ public abstract class Character : MonoBehaviour, IDamageable
         if (Heath <= 0)
         {
             Die();
+            
         }
     }
 
     protected virtual void Die()
     {
-        // เล่นแอนิเมชันตายได้ ถ้าขี้เกียจค่อยเพิ่มทีหลัง
+        Debug.Log($"{this.name} is death");
         Destroy(gameObject);
     }
 }
