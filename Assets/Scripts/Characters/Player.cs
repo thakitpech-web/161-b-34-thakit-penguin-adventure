@@ -1,92 +1,89 @@
-﻿
-using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
 public class Player : Character
 {
-    [Header("Jump/Run")]
-    [SerializeField] private float jumpForce = 12f;
-    [SerializeField] private float runMultiplier =5.0f;
+
+    [Header("Jump")]
+    [SerializeField] private float jumpForce = 15f;
     [SerializeField] private Transform groundCheck;
     [SerializeField] private LayerMask groundMask;
     [SerializeField] private float groundRadius = 0.15f;
 
+    private bool isGrounded;
+
     [Header("Dash")]
-    [SerializeField] private float dashForce = 12f;      
-    [SerializeField] private float dashDuration = 0.15f; 
-    [SerializeField] private float dashCooldown = 1.5f;  
-    private bool isDashing = false;
-    private float lastDashTime = -999f;
+    [SerializeField] private float dashSpeed = 8f;
+    [SerializeField] private float dashDuration = 0.15f;
+    [SerializeField] private float dashCooldown = 0.5f;
 
-    private bool IsGrounded =>
-        Physics2D.OverlapCircle(groundCheck.position, groundRadius, groundMask);
+    private bool isDashing;
+    private float dashTimer;
+    private float nextDashTime;
+    private float dashDirection;   // -1 หรือ 1
 
-    private void Update()
+    void Start()
     {
-        if (isDashing)
-            return;
-
-        float x = Input.GetAxisRaw("Horizontal");
-        bool run = Input.GetKey(KeyCode.LeftShift);
-        bool jump = Input.GetButtonDown("Jump");
-        bool dash = Input.GetMouseButtonDown(1);
-
-
-
-        float mult = run ? 1.5f : 1f; //เดิน, วิ่ง
-        rb.linearVelocity = new Vector2(x * MoveSpeed * mult, rb.linearVelocity.y);
-        if (x != 0) Flip(x);
-
-        
-        anim.SetFloat("Speed", Mathf.Abs(rb.linearVelocity.x)); //อนิเมชันการเดิน
-        anim.SetBool("isRun", run); //อนิเมชันการวิ่ง
-
-        // กระโดด
-        if (jump && IsGrounded)
-        {
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
-            rb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
-            Debug.Log("Player Jump");
-        }
-
-        
-
-        if (dash && Time.time >= lastDashTime + dashCooldown)
-        {
-            StartCoroutine(Dash());
-        }
-
-
-
+        base.Intialize(100);
     }
 
-    private IEnumerator Dash()
+    // ไม่ต้อง override Awake ก็ได้ แต่ถ้าอยากเพิ่มอะไรค่อยเพิ่มแล้วเรียก base.Awake()
+    protected override void Awake()
     {
-        isDashing = true;
-        lastDashTime = Time.time;
+        base.Awake();
+    }
 
-        
-        float dir = Mathf.Sign(transform.localScale.x); //หันทิศตาม localScale.x
-        if (dir == 0) dir = 1; 
+    private void CheckGround()
+    {
+        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundRadius, groundMask);
+    }
 
-        float originalGravity = rb.gravityScale;
+    public void Jump()
+    {
+        if (isGrounded)
+        {
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
+        }
+    }
 
-        
-        rb.gravityScale = 0f; //ระหว่าง Dash จะไม่แตะพื้น
+    public override void Move(Vector2 input)
+    {
+        if (isDashing) return; // ขณะ dash ไม่ใช้ Move ปกติ
 
-        rb.linearVelocity = new Vector2(dir * dashForce, 0f);
-
-        yield return new WaitForSeconds(dashDuration);
-
-        rb.gravityScale = originalGravity;
-        isDashing = false;
+        base.Move(input);      // ใช้วิธี Move เดิมจาก Character
     }
 
     public override void Attack()
     {
-        
+        // Player เกมนี้ไม่มีอาวุธโจมตี
+        // จะปล่อยว่าง หรือใช้เป็นท่าเล็กๆก็ได้
     }
 
-    
+    public void TryDash(float direction)
+    {
+        if (Time.time < nextDashTime || isDashing) return;
+
+        isDashing = true;
+        dashTimer = dashDuration;
+        dashDirection = Mathf.Sign(direction == 0 ? transform.localScale.x : direction);
+        nextDashTime = Time.time + dashCooldown;
+    }
+
+    private void Update()
+    {
+        CheckGround();
+        HandleDash(); 
+    }
+
+    private void HandleDash()
+    {
+        if (!isDashing) return;
+
+        dashTimer -= Time.deltaTime;
+        rb.linearVelocity = new Vector2(dashDirection * dashSpeed, rb.linearVelocity.y);
+
+        if (dashTimer <= 0f)
+        {
+            isDashing = false;
+        }
+    }
 }

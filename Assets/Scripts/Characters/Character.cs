@@ -1,62 +1,72 @@
-﻿// Scripts/Characters/Character.cs
+﻿using System;
 using UnityEngine;
 
-public abstract class Character : MonoBehaviour, IDamageable, iAttacker
+public abstract class Character : MonoBehaviour, IDamageable
 {
-    [Header("Stats")]
-    [SerializeField] private int maxHP = 3;
-    [SerializeField] private float moveSpeed = 5f;
+    private int heath;
+    public event Action<int, int> OnHealthChanged;
+    [SerializeField] public float maxHp = 100.0f;
 
-    public int MaxHP => maxHP;               // Encapsulation (read-only)
-    public int CurrentHP { get; private set; }
-    public float MoveSpeed => moveSpeed;
+    public int Heath
+    {
+        get { return heath; }
+        set
+        {
+            heath = (value < 0) ? 0 : value;
+            OnHealthChanged?.Invoke(heath, 100);
+        }
+    }
+    public void Intialize(int startHeath)
+    {
+        maxHp = startHeath;
+        Heath = startHeath;
+        OnHealthChanged?.Invoke(Heath, startHeath);
+        Debug.Log($"{this.name} is intialize Heath : {this.Heath}");
+
+        rb = GetComponent<Rigidbody2D>();
+        anim = GetComponent<Animator>();
+
+    }
+
+    [SerializeField] protected float moveSpeed = 3f;
 
     protected Rigidbody2D rb;
     protected Animator anim;
-    protected bool facingRight = true;
 
-    protected virtual void Awake()   // virtual ⇒ child can extend
+    protected virtual void Awake()      // virtual method
     {
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
-        CurrentHP = maxHP;
+        
     }
 
-    protected virtual void Flip(float dirX)
+    // virtual: ลูกจะ override ถ้าอยากเปลี่ยนวิธีเดิน
+    public virtual void Move(Vector2 input)
     {
-        if ((dirX > 0 && !facingRight) || (dirX < 0 && facingRight))
-        {
-            facingRight = !facingRight;
-            var s = transform.localScale;
-            s.x *= -1;
-            transform.localScale = s;
-        }
+        rb.linearVelocity = new Vector2(input.x * moveSpeed, rb.linearVelocity.y);
+        if (anim != null)
+            anim.SetFloat("Speed", Mathf.Abs(input.x));
+
+        // พลิกสปรייט
+        if (input.x != 0)
+            transform.localScale = new Vector3(Mathf.Sign(input.x), 1, 1);
     }
 
-    protected virtual void Move(float dirX)  // virtual for polymorphism
-    {
-        rb.linearVelocity = new Vector2(dirX * MoveSpeed, rb.linearVelocity.y);
-        Flip(dirX);
-    }
-
-    public abstract void Attack();           // Abstract method
+    // abstract: บังคับให้ทุกตัวละครต้องมีการโจมตี/แอคชันหลักของตัวเอง
+    public abstract void Attack();
 
     public virtual void TakeDamage(int amount)
     {
-        CurrentHP = Mathf.Max(0, CurrentHP - amount);
-        Debug.Log($"{name} TakeDamage {amount} → HP {CurrentHP}");
-        if (CurrentHP <= 0) Die();
-    }
-
-    public virtual void TakeDamage(int amount, Vector2 knockback) // Overloading
-    {
-        TakeDamage(amount);
-        rb.AddForce(knockback, ForceMode2D.Impulse);
+        Heath -= amount;
+        if (Heath <= 0)
+        {
+            Die();
+        }
     }
 
     protected virtual void Die()
     {
-        Debug.Log($"{name} died");
+        // เล่นแอนิเมชันตายได้ ถ้าขี้เกียจค่อยเพิ่มทีหลัง
         Destroy(gameObject);
     }
 }
