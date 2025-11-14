@@ -1,16 +1,22 @@
 using UnityEngine;
 
-public class Weapon : MonoBehaviour
+public abstract class Weapon : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    [SerializeField] protected int damage = 1;
+    [SerializeField] protected float cooldown = 0.25f;
+
+    protected GameObject owner;
+    protected float lastShotTime;
+
+    public float Cooldown => cooldown;
+
+    public bool TryFire(GameObject owner, Vector2 dirNormalized)
     {
-        
+        if (Time.time < lastShotTime + cooldown) return false;
+        lastShotTime = Time.time;
+        this.owner = owner;
+        return FireInternal(dirNormalized.normalized);
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    protected abstract bool FireInternal(Vector2 dirNormalized);
 }
