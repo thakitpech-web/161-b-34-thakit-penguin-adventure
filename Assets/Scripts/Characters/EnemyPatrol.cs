@@ -1,47 +1,63 @@
+๏ปฟusing Unity.VisualScripting;
 using UnityEngine;
 
 public class EnemyPatrol : Enemy
 {
-    public Vector2 velocity;
-    public Transform[] movePoints;
-    void Start()
+
+    [SerializeField] private Rigidbody2D rb;
+    [SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] private float speed = 3f;
+    [SerializeField] private int startDirection = 1;
+
+    private int currentDiaection;
+    private float halfWidth;
+    private Vector2 movement;
+        
+    private void Start()
     {
         base.Intialize(20);
         DamageHit = 20;
-        //set speed and direction of movement
-        velocity = new Vector2(-1.0f, 0.0f); //start with moving left
+
+        halfWidth = spriteRenderer.bounds.extents.x;
+        currentDiaection = startDirection;
     }
-    public override void Behavior()
+
+    protected override void Awake()
     {
-        //move from current position
-        rb.MovePosition(rb.position + velocity * Time.fixedDeltaTime);
-        //move left และเกินขอบซ้าย
-        if (velocity.x < 0 && rb.position.x <= movePoints[0].position.x)
-        {
-            Flip();
-        }
-        //move right และเกินขอบขวา
-        if (velocity.x > 0 && rb.position.x >= movePoints[1].position.x)
-        {
-            Flip();
-        }
+        
     }
-    //flip ant to the opposite direction
-    public void Flip()
-    {
-        velocity.x *= -1; //change direction of movement
-                          //Flip the image
-        Vector3 theScale = transform.localScale;
-        theScale.x *= -1;
-        transform.localScale = theScale;
-    }
+
     private void FixedUpdate()
     {
-        Behavior();
+        movement.x = speed * currentDiaection;
+        movement.y = rb.linearVelocity.y;
+        rb.linearVelocity = movement;
+        SetDiraction();
+
     }
+
+    [System.Obsolete]
+    private void SetDiraction()
+    {
+        if (Physics2D.Raycast(transform.position, Vector2.left, halfWidth + 0.1f, LayerMask.GetMask("Ground")) &&
+            rb.velocity.x > 0) 
+        {
+            currentDiaection *= -1;
+        }
+        else if (Physics2D.Raycast(transform.position, Vector2.right, halfWidth + 0.1f, LayerMask.GetMask("Ground"))
+                && rb.velocity.x < 0)
+        {
+            currentDiaection *= -1;
+        }
+        Debug.DrawRay(transform.position, Vector2.right * (halfWidth + 0.1f), Color.red);
+        Debug.DrawRay(transform.position, Vector2.left * (halfWidth + 0.1f), Color.red);
+    }
+
 
     public override void Attack()
     {
-        throw new System.NotImplementedException();
+       
     }
+
+    
 }
