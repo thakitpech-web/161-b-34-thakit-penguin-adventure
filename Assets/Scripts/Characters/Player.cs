@@ -101,6 +101,11 @@ public class Player : Character
         }
     }
 
+    public void Heal(int value)
+    {
+        Health += value;
+    }
+
     protected virtual void Die()
     {
         Debug.Log($"{this.name} is death");
