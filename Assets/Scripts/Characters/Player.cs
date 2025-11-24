@@ -24,12 +24,18 @@ public class Player : Character
     private float dashDirection;
 
     [Header("Respawn")]
-    [SerializeField] private Transform respawnPoint; // จุดเกิด (ลากจาก Inspector)
-    [SerializeField] private float respawnDelay = 1f; // หน่วงก่อนเกิดใหม่
+    [SerializeField] private Transform respawnPoint; 
+    [SerializeField] private float respawnDelay = 1f; 
     private Vector3 defaultSpawnPos;
     private int startHealth = 100;
 
     public int Score { get; private set; }
+
+    [Header("Audio")]
+    [SerializeField] private AudioSource audioSource;  
+    [SerializeField] private AudioClip jumpClip;
+    [SerializeField] private AudioClip hitClip;
+    [SerializeField] private AudioClip collectClip;
 
     private void OnTriggerEnter2D(Collider2D other)
     {
@@ -44,6 +50,9 @@ public class Player : Character
     {
         base.Intialize(100);
         defaultSpawnPos = transform.position;
+
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>();
     }
 
     
@@ -63,6 +72,9 @@ public class Player : Character
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
         }
+
+        if (audioSource != null && jumpClip != null)
+            audioSource.PlayOneShot(jumpClip);
     }
 
     public override void Move(Vector2 input)
@@ -103,6 +115,10 @@ public class Player : Character
     public void takeDamage(int value)
     {
         Health -= value;
+
+        if (audioSource != null && hitClip != null)
+            audioSource.PlayOneShot(hitClip);
+
         if (Health <= 0)
         {
             Die();
