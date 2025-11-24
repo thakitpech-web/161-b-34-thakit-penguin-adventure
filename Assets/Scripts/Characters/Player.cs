@@ -23,6 +23,12 @@ public class Player : Character
     private float nextDashTime;
     private float dashDirection;
 
+    [Header("Respawn")]
+    [SerializeField] private Transform respawnPoint; // จุดเกิด (ลากจาก Inspector)
+    [SerializeField] private float respawnDelay = 1f; // หน่วงก่อนเกิดใหม่
+    private Vector3 defaultSpawnPos;
+    private int startHealth = 100;
+
     private void OnTriggerEnter2D(Collider2D other)
     {
         Item item = other.GetComponent<Item>();
@@ -35,6 +41,7 @@ public class Player : Character
     void Start()
     {
         base.Intialize(100);
+        defaultSpawnPos = transform.position;
     }
 
     
@@ -106,10 +113,28 @@ public class Player : Character
         Health += value;
     }
 
+    private System.Collections.IEnumerator RespawnRoutine()
+    {
+        // หยุดการเคลื่อนที่
+        rb.linearVelocity = Vector2.zero;
+
+        // หน่วงเวลาเล็กน้อย เผื่อเล่นอนิเมชั่นตาย
+        yield return new WaitForSeconds(respawnDelay);
+
+        // เลือกตำแหน่งเกิด: ถ้ามีตั้ง respawnPoint ไว้ก็ใช้ตัวนั้น ไม่งั้นใช้ตำแหน่งเริ่มเกม
+        Vector3 targetPos = respawnPoint != null ? respawnPoint.position : defaultSpawnPos;
+        transform.position = targetPos;
+
+        // รีเซ็ตเลือด
+        Health = startHealth;   // หรือ 100 ถ้าไม่ใช้ตัวแปร startHealth
+
+        Debug.Log($"{name} respawn at {targetPos}");
+    }
+
     protected virtual void Die()
     {
         Debug.Log($"{this.name} is death");
-        Destroy(this.gameObject);
+        StartCoroutine(RespawnRoutine());
     }
 
     private void Update()
