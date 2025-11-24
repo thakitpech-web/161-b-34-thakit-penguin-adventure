@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿
+using UnityEngine;
+using System.Collections;
 
 public class Player : Character
 {
@@ -19,14 +21,23 @@ public class Player : Character
     private bool isDashing;
     private float dashTimer;
     private float nextDashTime;
-    private float dashDirection;   // -1 หรือ 1
+    private float dashDirection;
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        Item item = other.GetComponent<Item>();
+        if (item != null)
+        {
+            item.PickUp(this);
+        }
+    }
 
     void Start()
     {
         base.Intialize(100);
     }
 
-    // ไม่ต้อง override Awake ก็ได้ แต่ถ้าอยากเพิ่มอะไรค่อยเพิ่มแล้วเรียก base.Awake()
+    
     protected override void Awake()
     {
         base.Awake();
@@ -47,29 +58,9 @@ public class Player : Character
 
     public override void Move(Vector2 input)
     {
-        if (isDashing) return; // ขณะ dash ไม่ใช้ Move ปกติ
+        if (isDashing) return; 
 
-        base.Move(input);      // ใช้วิธี Move เดิมจาก Character
-    }
-
-    public void OnHitWith(Enemy enemy)
-    {
-        TakeDamage(enemy.DamageHit);
-        Debug.Log($"Player take dame current Hp : {Heath}");
-    }
-
-    private void OnCollisionEnter2D(Collision2D other)
-    {
-        Enemy enemy = other.gameObject.GetComponent<Enemy>();
-        if (enemy != null) { 
-        OnHitWith(enemy);
-        }
-    }
-
-    public override void Attack()
-    {
-        // Player เกมนี้ไม่มีอาวุธโจมตี
-        // จะปล่อยว่าง หรือใช้เป็นท่าเล็กๆก็ได้
+        base.Move(input);      
     }
 
     public void TryDash(float direction)
@@ -80,6 +71,40 @@ public class Player : Character
         dashTimer = dashDuration;
         dashDirection = Mathf.Sign(direction == 0 ? transform.localScale.x : direction);
         nextDashTime = Time.time + dashCooldown;
+    }
+
+    public void addPoint(int value)
+    {
+        Point += value;
+       
+    }
+
+    public void AddTemporarySpeed(int value, float duration)
+    {
+        StartCoroutine(SpeedBoostRoutine(value, duration));
+    }
+
+    private IEnumerator SpeedBoostRoutine(int value, float duration)
+    {
+        moveSpeed += value;                       // เพิ่มความเร็วชั่วคราว
+        yield return new WaitForSeconds(duration);
+        moveSpeed -= value;                       // กลับสู่ค่าปกติ
+    }
+
+    public void takeDamage(int value)
+    {
+        Health -= value;
+        if (Health <= 0)
+        {
+            Die();
+
+        }
+    }
+
+    protected virtual void Die()
+    {
+        Debug.Log($"{this.name} is death");
+        Destroy(this.gameObject);
     }
 
     private void Update()

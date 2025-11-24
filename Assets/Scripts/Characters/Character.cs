@@ -1,27 +1,19 @@
 ﻿using System;
 using UnityEngine;
 
-public abstract class Character : MonoBehaviour, IDamageable
+public abstract class Character : MonoBehaviour
 {
-    private int heath;
+    
     public event Action<int, int> OnHealthChanged;
-    [SerializeField] public float maxHp = 100.0f;
+    [field: SerializeField] public int Point { get; set; } = 0;
+    [field: SerializeField] public int Health { get; set; } = 100;
 
-    public int Heath
-    {
-        get { return heath; }
-        set
-        {
-            heath = (value < 0) ? 0 : value;
-            OnHealthChanged?.Invoke(heath, 100);
-        }
-    }
+   
     public void Intialize(int startHeath)
     {
-        maxHp = startHeath;
-        Heath = startHeath;
-        OnHealthChanged?.Invoke(Heath, startHeath);
-        Debug.Log($"{this.name} is intialize Heath : {this.Heath}");
+        Health = startHeath;
+        OnHealthChanged?.Invoke(Health, startHeath);
+        Debug.Log($"{this.name} is intialize Heath : {this.Health}");
 
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
@@ -33,14 +25,14 @@ public abstract class Character : MonoBehaviour, IDamageable
     protected Rigidbody2D rb;
     protected Animator anim;
 
-    protected virtual void Awake()      // virtual method
+    protected virtual void Awake()      
     {
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
         
     }
 
-    // virtual: ลูกจะ override ถ้าอยากเปลี่ยนวิธีเดิน
+    
     public virtual void Move(Vector2 input)
     {
         rb.linearVelocity = new Vector2(input.x * moveSpeed, rb.linearVelocity.y);
@@ -52,22 +44,7 @@ public abstract class Character : MonoBehaviour, IDamageable
             transform.localScale = new Vector3(Mathf.Sign(input.x), 1, 1);
     }
 
-    // abstract: บังคับให้ทุกตัวละครต้องมีการโจมตี/แอคชันหลักของตัวเอง
-    public abstract void Attack();
+    
 
-    public virtual void TakeDamage(int amount)
-    {
-        Heath -= amount;
-        if (Heath <= 0)
-        {
-            Die();
-            
-        }
-    }
-
-    protected virtual void Die()
-    {
-        Debug.Log($"{this.name} is death");
-        Destroy(gameObject);
-    }
+ 
 }
