@@ -29,6 +29,8 @@ public class Player : Character
     private Vector3 defaultSpawnPos;
     private int startHealth = 100;
 
+    public int Score { get; private set; }
+
     private void OnTriggerEnter2D(Collider2D other)
     {
         Item item = other.GetComponent<Item>();
@@ -82,8 +84,8 @@ public class Player : Character
 
     public void addPoint(int value)
     {
-        Point += value;
-       
+        Score += value;
+        Debug.Log("Score: " + Score);
     }
 
     public void AddTemporarySpeed(int value, float duration)
